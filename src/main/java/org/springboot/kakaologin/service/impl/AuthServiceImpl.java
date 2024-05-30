@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springboot.kakaologin.data.UserInfo;
 import org.springboot.kakaologin.dto.ResponseDto;
+import org.springboot.kakaologin.repository.AuthRepository;
 import org.springboot.kakaologin.service.AuthService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -31,6 +33,8 @@ public class AuthServiceImpl implements AuthService {
     private String kakaoAccessTokenUrl;
     @Value("${kakao.userinfo.url}")
     private String kakaoUserInfoUrl;
+
+    private final AuthRepository authRepository;
     @Override
     public ResponseEntity<?> getKaKaoUserInfo(String authorizeCode) {
         log.info("[kakao login] issue a authorizecode");
@@ -64,8 +68,6 @@ public class AuthServiceImpl implements AuthService {
             return null;
         }
 
-
-
     }
     private ResponseDto getInfo(String accessToken) {
         RestTemplate restTemplate = new RestTemplate();
@@ -93,12 +95,21 @@ public class AuthServiceImpl implements AuthService {
                     .profileUrl((String) profile.get("profile_image_url"))
                     .build();
 
+            System.out.println(requestSignUpDto);
             return requestSignUpDto;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
-
-
-   }
+    @Override
+    public void saveUserData(ResponseDto responseDto){
+        UserInfo userInfo = UserInfo.builder()
+                .userName(responseDto.getUserName())
+                .phoneNumber(responseDto.getPhoneNumber())
+                .email(responseDto.getEmail())
+                .profileUrl(responseDto.getProfileUrl())
+                .build();
+        authRepository.save(userInfo);
+    }
+}
