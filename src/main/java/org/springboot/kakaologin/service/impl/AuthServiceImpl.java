@@ -8,6 +8,7 @@ import org.springboot.kakaologin.data.UserInfo;
 import org.springboot.kakaologin.dto.ResponseDto;
 import org.springboot.kakaologin.repository.AuthRepository;
 import org.springboot.kakaologin.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +19,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
 import java.util.Map;
 
 
@@ -84,7 +86,8 @@ public class AuthServiceImpl implements AuthService {
         ResponseEntity<String> response = restTemplate.postForEntity(kakaoUserInfoUrl, entity, String.class);
 
         try {
-            Map<String, Object> responseMap = mapper.readValue(response.getBody(), new TypeReference<Map<String, Object>>() {});
+            Map<String, Object> responseMap = mapper.readValue(response.getBody(), new TypeReference<Map<String, Object>>() {
+            });
             Map<String, Object> kakaoAccount = (Map<String, Object>) responseMap.get("kakao_account");
             Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
 
@@ -94,8 +97,10 @@ public class AuthServiceImpl implements AuthService {
                     .email((String) kakaoAccount.get("email"))
                     .profileUrl((String) profile.get("profile_image_url"))
                     .build();
+            saveUserData(requestSignUpDto);
 
             System.out.println(requestSignUpDto);
+
             return requestSignUpDto;
         } catch (Exception e) {
             e.printStackTrace();
@@ -111,5 +116,17 @@ public class AuthServiceImpl implements AuthService {
                 .profileUrl(responseDto.getProfileUrl())
                 .build();
         authRepository.save(userInfo);
+        System.out.println(userInfo);
     }
+
+//    @PostConstruct
+//    public void init() {
+//        ResponseDto testDto = ResponseDto.builder()
+//                .userName("Test User")
+//                .phoneNumber("123-456-7890")
+//                .email("test@example.com")
+//                .profileUrl("http://example.com/profile.jpg")
+//                .build();
+//        saveUserData(testDto);
+//    }
 }
